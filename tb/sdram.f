@@ -13,10 +13,12 @@ tb/if/sdram_rst_if.sv
 // UVM package
 tb/pkg/sdram_pkg.sv
 
-// assertions + bind (after DUT and package)
+// assertions + white-box coverage + binds (after DUT and package)
 tb/sva/sdram_protocol_sva.sv
 tb/sva/sdram_timing_sva.sv
+tb/sva/sdram_cov.sv
 tb/sva/sdram_sva_bind.sv
+tb/sva/sdram_cov_bind.sv
 
 // top
 tb/tb_top.sv
