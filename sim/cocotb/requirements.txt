@@ -1,0 +1,8 @@
+# Python deps for the cocotb + Verilator smoke mirror.
+#
+# cocotb is pinned to 1.9.x because the Verilator available license-free on
+# stock Ubuntu (apt) is 5.020, and cocotb >= 2.0 requires Verilator >= 5.036.
+# If you have Verilator >= 5.036 you may use cocotb 2.x instead (the test code
+# only needs Clock(units=...) -> Clock(unit=...) adjusted).
+cocotb==1.9.2
+pytest>=7.0

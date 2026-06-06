@@ -1,0 +1,46 @@
+# ---- cocotb / Verilator sim artifacts ----
+**/sim_build/
+**/obj_dir/
+**/__pycache__/
+*.pyc
+results.xml
+**/results.xml
+*.vcd
+*.fst
+dump.vcd
+
+# ---- commercial-sim artifacts (Questa/VCS/Xcelium/DSim/Xsim) ----
+work/
+transcript
+*.wlf
+modelsim.ini
+vsim.wlf
+csrc/
+simv
+simv.daidir/
+*.vpd
+*.vdb
+ucli.key
+vc_hdrs.h
+*.fsdb
+novas*.*
+xsim.dir/
+*.jou
+*.pb
+.Xil/
+xvlog.log
+xelab.log
+xsim*.log
+webtalk*.log
+dsim_work/
+metrics.db
+*.dsim.log
+
+# ---- python tooling outputs ----
+regression_out/
+*.junit.xml
+coverage_html/
+
+# ---- misc ----
+*.log
+!campus_run.log.example
