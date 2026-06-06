@@ -1,0 +1,22 @@
+diff --git a/rtl/sdram_lite_ctrl.sv b/rtl/sdram_lite_ctrl.sv
+index 0325028..73342c5 100644
+--- a/rtl/sdram_lite_ctrl.sv
++++ b/rtl/sdram_lite_ctrl.sv
+@@ -468,7 +468,7 @@ module sdram_lite_ctrl #(
+           end else begin
+             bank_state[cur_bank] <= BK_ACTING; // page miss (idle) -> activate
+             open_row[cur_bank]   <= cur_row;
+-            trcd_cnt    <= {1'b0, t_rcd_q};
++            trcd_cnt    <= {1'b0, t_rcd_q} - 5'd1; // BUG3: tRCD off-by-one
+             act_issue   <= 1'b1;
+             sched_state <= S_ACT;
+           end
+@@ -480,7 +480,7 @@ module sdram_lite_ctrl #(
+           else begin
+             bank_state[cur_bank] <= BK_ACTING;
+             open_row[cur_bank]   <= cur_row;
+-            trcd_cnt    <= {1'b0, t_rcd_q};
++            trcd_cnt    <= {1'b0, t_rcd_q} - 5'd1; // BUG3: tRCD off-by-one
+             act_issue   <= 1'b1;
+             sched_state <= S_ACT;
+           end

@@ -1,0 +1,13 @@
+diff --git a/rtl/sdram_lite_ctrl.sv b/rtl/sdram_lite_ctrl.sv
+index 0325028..54ddfb6 100644
+--- a/rtl/sdram_lite_ctrl.sv
++++ b/rtl/sdram_lite_ctrl.sv
+@@ -186,7 +186,7 @@ module sdram_lite_ctrl #(
+     return |a[ADDR_W-1:IDX_W];
+   endfunction
+   function automatic logic [BANK_W-1:0] dec_bank(input logic [ADDR_W-1:0] a);
+-    return a[COL_W+ROW_W +: BANK_W];
++    return a[COL_W +: BANK_W]; // BUG1: bank decode overlaps row
+   endfunction
+   function automatic logic [ROW_W-1:0] dec_row(input logic [ADDR_W-1:0] a);
+     return a[COL_W +: ROW_W];

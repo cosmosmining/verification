@@ -19,6 +19,16 @@ VERILOG_SOURCES += $(RTL_DIR)/sdram_lite_ctrl.sv
 TOPLEVEL := sdram_lite_ctrl
 MODULE   ?= tb_smoke
 
+# ASSERT=1 also elaborates the bound SVA under Verilator (subset of SVA) so the
+# protocol/timing assertions are live in the mirror -- used by the bug hunt to
+# catch timing defects that have no functional (scoreboard) effect.
+SVA_DIR := $(abspath $(shell pwd)/../../tb/sva)
+ifeq ($(ASSERT),1)
+  VERILOG_SOURCES += $(SVA_DIR)/sdram_protocol_sva.sv
+  VERILOG_SOURCES += $(SVA_DIR)/sdram_timing_sva.sv
+  VERILOG_SOURCES += $(SVA_DIR)/sdram_sva_bind.sv
+endif
+
 ifeq ($(SIM),verilator)
   EXTRA_ARGS += -Wno-fatal --timescale 1ns/1ps
   ifeq ($(WAVES),1)
@@ -26,6 +36,9 @@ ifeq ($(SIM),verilator)
   endif
   ifeq ($(COVERAGE),1)
     EXTRA_ARGS += --coverage
+  endif
+  ifeq ($(ASSERT),1)
+    EXTRA_ARGS += --assert
   endif
 endif
 

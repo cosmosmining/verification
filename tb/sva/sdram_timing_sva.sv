@@ -9,7 +9,8 @@ module sdram_timing_sva #(parameter int BANKS = 4, parameter int TRFC = 8) (
   input logic [3:0]  bank_state [0:BANKS-1],
   input logic [3:0]  t_rcd_q, t_rp_q,
   input logic [15:0] t_ref_q,
-  input logic        refresh_active, init_done, ctrl_enable, ctrl_refresh_en
+  input logic        refresh_active, init_done, ctrl_enable, ctrl_refresh_en,
+  input logic        rsp_valid, rsp_ready
 );
   // ---- A-1HOT : per-bank state is always one-hot (legal encoding) ----
   genvar b;
@@ -54,14 +55,19 @@ module sdram_timing_sva #(parameter int BANKS = 4, parameter int TRFC = 8) (
     (act_issue && await_act) |-> (cyc_since_pre >= trp_cap));
 
   // ---- A-TREF : refresh interval honored while enabled ----
+  // Count only cycles where the refresh manager can make progress: it cannot
+  // refresh while a response is stalled by the master (legitimate rsp back-
+  // pressure) or while a refresh is already running. This frozen-count form is
+  // the correct statement of "honor tREF" for a controller that refreshes at
+  // request boundaries.
+  wire tref_active = ctrl_enable && ctrl_refresh_en && init_done
+                     && !refresh_active && !(rsp_valid && !rsp_ready);
   int unsigned cyc_since_ref;
   always_ff @(posedge clk or negedge rst_n)
-    if (!rst_n) cyc_since_ref <= 0;
-    else if (ref_issue) cyc_since_ref <= 0;
-    else cyc_since_ref <= cyc_since_ref + 1;
-  // while auto-refresh is enabled and initialised, a refresh must occur before
-  // the interval (+ refresh duration + arbitration slack) elapses.
+    if (!rst_n)            cyc_since_ref <= 0;
+    else if (ref_issue)    cyc_since_ref <= 0;
+    else if (tref_active)  cyc_since_ref <= cyc_since_ref + 1;
+  // bound = interval + worst-case single-request service (tRP+tRCD+TCL) + refresh
   ap_tref : assert property (@(posedge clk) disable iff (!rst_n)
-    (ctrl_enable && ctrl_refresh_en && init_done)
-      |-> (cyc_since_ref <= (t_ref_q + TRFC + 16)));
+    tref_active |-> (cyc_since_ref <= (t_ref_q + TRFC + 40)));
 endmodule

@@ -1,0 +1,13 @@
+diff --git a/rtl/sdram_lite_ctrl.sv b/rtl/sdram_lite_ctrl.sv
+index 0325028..11628f4 100644
+--- a/rtl/sdram_lite_ctrl.sv
++++ b/rtl/sdram_lite_ctrl.sv
+@@ -518,7 +518,7 @@ module sdram_lite_ctrl #(
+         S_RESP: begin
+           rsp_valid <= 1'b1;
+           rsp_rdata <= cur_rdata;
+-          if (rsp_valid && rsp_ready) begin
++          if (rsp_valid) begin // BUG2: ignores rsp_ready
+             rsp_valid <= 1'b0;
+             // advance queue head
+             q_head <= (q_head == Q_LAST) ? '0 : q_head + 1'b1;

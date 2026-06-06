@@ -1,0 +1,13 @@
+diff --git a/rtl/sdram_lite_ctrl.sv b/rtl/sdram_lite_ctrl.sv
+index 0325028..e75bd30 100644
+--- a/rtl/sdram_lite_ctrl.sv
++++ b/rtl/sdram_lite_ctrl.sv
+@@ -305,7 +305,7 @@ module sdram_lite_ctrl #(
+ 
+       ctrl_enable <= 1'b0; ctrl_refresh_en <= 1'b0; ctrl_irq_en <= 1'b0;
+       t_rcd_q <= 4'd3; t_rp_q <= 4'd3; t_ref_q <= 16'd1024;
+-      err_range <= 1'b0; err_addr_q <= '0; err_addr_valid <= 1'b0;
++      err_addr_q <= '0; err_addr_valid <= 1'b0; // BUG7: err_range leaks through reset
+       scratch_q <= '0;
+ 
+       rsp_valid <= 1'b0; rsp_rdata <= '0; rsp_resp <= NRESP_OKAY;

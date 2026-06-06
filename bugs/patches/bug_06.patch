@@ -1,0 +1,13 @@
+diff --git a/rtl/sdram_lite_ctrl.sv b/rtl/sdram_lite_ctrl.sv
+index 0325028..10eb836 100644
+--- a/rtl/sdram_lite_ctrl.sv
++++ b/rtl/sdram_lite_ctrl.sv
+@@ -504,7 +504,7 @@ module sdram_lite_ctrl #(
+             // perform access at CAS completion
+             if (cur_we) begin
+               for (int b = 0; b < STRB_W; b++)
+-                if (cur_strb[b]) mem[cur_index][b*8 +: 8] <= cur_wdata[b*8 +: 8];
++                mem[cur_index][b*8 +: 8] <= cur_wdata[b*8 +: 8]; // BUG6: ignores wstrb
+               cur_rdata <= '0;
+             end else begin
+               cur_rdata <= mem[cur_index];

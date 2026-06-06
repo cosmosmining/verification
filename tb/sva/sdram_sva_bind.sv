@@ -21,5 +21,6 @@ bind sdram_lite_ctrl sdram_timing_sva #(.BANKS(BANKS), .TRFC(TRFC)) u_timing_sva
   .act_issue(act_issue), .pre_issue(pre_issue), .cas_issue(cas_issue), .ref_issue(ref_issue),
   .bank_state(bank_state), .t_rcd_q(t_rcd_q), .t_rp_q(t_rp_q), .t_ref_q(t_ref_q),
   .refresh_active(refresh_active), .init_done(init_done),
-  .ctrl_enable(ctrl_enable), .ctrl_refresh_en(ctrl_refresh_en)
+  .ctrl_enable(ctrl_enable), .ctrl_refresh_en(ctrl_refresh_en),
+  .rsp_valid(rsp_valid), .rsp_ready(rsp_ready)
 );

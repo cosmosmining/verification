@@ -1,0 +1,12 @@
+diff --git a/rtl/sdram_lite_ctrl.sv b/rtl/sdram_lite_ctrl.sv
+index 0325028..bb67b13 100644
+--- a/rtl/sdram_lite_ctrl.sv
++++ b/rtl/sdram_lite_ctrl.sv
+@@ -378,6 +378,7 @@ module sdram_lite_ctrl #(
+       if (ctrl_enable && ctrl_refresh_en && init_done && !refresh_active) begin
+         if (ref_cnt != 0) ref_cnt <= ref_cnt - 1'b1;
+         else              refresh_pending <= 1'b1;
++        err_range <= 1'b0; // BUG4: error flag not sticky
+       end
+ 
+       // ===================================================================

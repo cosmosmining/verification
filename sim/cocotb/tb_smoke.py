@@ -159,6 +159,34 @@ async def monitor_responses(dut, n, collected, rng):
     dut.rsp_ready.value = 0
 
 
+async def one_req(dut, we, addr, wdata=0, wstrb=0xF):
+    """Drive a single native request and return its (resp, rdata)."""
+    dut.req_valid.value = 1
+    dut.req_we.value = we
+    dut.req_addr.value = addr
+    dut.req_wdata.value = wdata
+    dut.req_wstrb.value = wstrb if we else 0
+    while True:
+        await FallingEdge(dut.clk)
+        if dut.req_ready.value == 1:
+            await RisingEdge(dut.clk)
+            dut.req_valid.value = 0
+            break
+        await RisingEdge(dut.clk)
+    dut.rsp_ready.value = 1
+    resp = rd = 0
+    while True:
+        await FallingEdge(dut.clk)
+        if dut.rsp_valid.value == 1:
+            resp = int(dut.rsp_resp.value)
+            rd = int(dut.rsp_rdata.value)
+            await RisingEdge(dut.clk)
+            break
+        await RisingEdge(dut.clk)
+    dut.rsp_ready.value = 0
+    return resp, rd
+
+
 # ===========================================================================
 # Tests
 # ===========================================================================
@@ -274,3 +302,50 @@ def _check(dut, expected, collected):
             dut._log.error("txn %d: rdata 0x%08x != exp 0x%08x" % (i, ardata, erdata))
             fails += 1
     assert fails == 0, f"{fails} scoreboard mismatch(es)"
+
+
+@cocotb.test(timeout_time=3, timeout_unit="ms")
+async def error_flag_sticky(dut):
+    """Out-of-range -> sticky RANGE_ERR + ERR_ADDR latch + W1C clear (F-022/23/24)."""
+    cocotb.start_soon(Clock(dut.clk, CLK_NS, units="ns").start())
+    await reset_dut(dut)
+    await configure(dut)
+
+    await axil_write(dut, A_ERRST, 1)           # clear any prior error (W1C)
+    oor = CAP_WORDS + 5
+    resp, _ = await one_req(dut, we=1, addr=oor, wdata=0x1234_5678)
+    assert resp == NRESP_ERROR, f"OOR resp = {resp}, expected ERROR"
+
+    st, _ = await axil_read(dut, A_ERRST)
+    assert st & 1, "RANGE_ERR not set after out-of-range access"
+    ea, _ = await axil_read(dut, A_ERRADDR)
+    assert ea == oor, f"ERR_ADDR = 0x{ea:x}, expected 0x{oor:x}"
+
+    await axil_write(dut, A_ERRST, 1)           # W1C
+    st, _ = await axil_read(dut, A_ERRST)
+    assert (st & 1) == 0, "RANGE_ERR did not clear on W1C (sticky/clear bug)"
+    dut._log.info("error_flag_sticky: PASS")
+
+
+@cocotb.test(timeout_time=3, timeout_unit="ms")
+async def reset_clears_error(dut):
+    """Reset must clear control/error state -- guards the 'reset leak' bug class (F-025)."""
+    cocotb.start_soon(Clock(dut.clk, CLK_NS, units="ns").start())
+    await reset_dut(dut)
+    await configure(dut)
+
+    await axil_write(dut, A_ERRST, 1)
+    resp, _ = await one_req(dut, we=1, addr=CAP_WORDS + 9, wdata=0xDEAD)
+    assert resp == NRESP_ERROR
+    st, _ = await axil_read(dut, A_ERRST)
+    assert st & 1, "precondition: RANGE_ERR should be set"
+
+    # assert reset mid-life
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 4)
+    dut.rst_n.value = 1
+    await RisingEdge(dut.clk)
+
+    st, _ = await axil_read(dut, A_ERRST)
+    assert (st & 1) == 0, "reset leak: ERR_STATUS not cleared by reset"
+    dut._log.info("reset_clears_error: PASS")

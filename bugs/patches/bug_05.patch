@@ -1,0 +1,13 @@
+diff --git a/rtl/sdram_lite_ctrl.sv b/rtl/sdram_lite_ctrl.sv
+index 0325028..513e707 100644
+--- a/rtl/sdram_lite_ctrl.sv
++++ b/rtl/sdram_lite_ctrl.sv
+@@ -453,7 +453,7 @@ module sdram_lite_ctrl #(
+               err_addr_valid <= 1'b1;
+             end
+             cur_rdata <= '0;
+-            rsp_resp  <= NRESP_ERROR;
++            rsp_resp  <= NRESP_OKAY; // BUG5: OOR error suppressed
+             sched_state <= S_RESP;
+           end else if (bank_state[cur_bank] == BK_ACTIVE &&
+                        open_row[cur_bank] == cur_row) begin
