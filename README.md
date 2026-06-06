@@ -13,7 +13,7 @@ regression/coverage tooling, bind-in **SVA**, and an **injected-bug campaign**.
 
 ## Résumé extraction (for ASIC/DV applications)
 
-**1. What I built** — `sdram_lite_ctrl`, a ~640-line synthesizable SystemVerilog
+**1. What I built** — `sdram_lite_ctrl`, a ~560-line synthesizable SystemVerilog
 memory controller: **AXI4-Lite** CSR subordinate + native request/response port,
 **4-bank one-hot open-page FSM**, CSR-programmable **tRCD/tRP/tREF** timing, an
 auto-refresh manager, an in-order request queue, and out-of-range error handling
@@ -75,7 +75,7 @@ mindset, tape-out.
                      v                                  |
             +--------------------+      +---------------+-----------+
             |  sdram_lite_ctrl   |<-----| sdram_protocol_sva (A-AXI/REQ/RSP)
-            |  DUT (~640 lines)  |      | sdram_timing_sva   (A-TRCD/TRP/TREF/1HOT)
+            |  DUT (~560 lines)  |      | sdram_timing_sva   (A-TRCD/TRP/TREF/1HOT)
             +--------------------+      +---------------------------+
 
   License-free mirror (runs here + CI):  sim/cocotb  ->  Verilator
