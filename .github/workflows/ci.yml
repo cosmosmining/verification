@@ -1,0 +1,51 @@
+name: ci
+
+# cocotb + Verilator smoke on every push/PR (license-free). The full UVM
+# regression runs on campus simulators via scripts/campus_regress.sh.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Verilator + cocotb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y verilator
+          verilator --version
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r sim/cocotb/requirements.txt
+
+      - name: Lint (RTL + bound SVA)
+        run: make lint
+
+      - name: Smoke (cocotb scoreboard mirror)
+        run: make smoke
+
+      - name: Parallel-seed regression (JUnit + triage + HTML)
+        run: python3 scripts/regress.py --num-seeds 6 --jobs 3
+
+      - name: Structural coverage merge
+        run: python3 scripts/merge_coverage.py --num-seeds 4
+
+      - name: Upload regression artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-${{ github.run_number }}
+          path: |
+            regression_out/junit.xml
+            regression_out/triage.md
+            regression_out/summary.html
+            regression_out/coverage_html/index.html
+
+      - name: Publish JUnit to run summary
+        if: always()
+        run: |
+          echo "## Regression triage" >> "$GITHUB_STEP_SUMMARY"
+          cat regression_out/triage.md >> "$GITHUB_STEP_SUMMARY" || true

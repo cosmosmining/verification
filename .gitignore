@@ -44,3 +44,8 @@ coverage_html/
 # ---- misc ----
 *.log
 !campus_run.log.example
+
+# verilator coverage data
+coverage.dat
+**/coverage.dat
+merged.dat

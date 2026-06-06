@@ -24,6 +24,9 @@ ifeq ($(SIM),verilator)
   ifeq ($(WAVES),1)
     EXTRA_ARGS += --trace --trace-structs
   endif
+  ifeq ($(COVERAGE),1)
+    EXTRA_ARGS += --coverage
+  endif
 endif
 
 include $(COCOTB_DIR)/Makefile.sim
