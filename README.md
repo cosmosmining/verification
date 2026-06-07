@@ -43,8 +43,30 @@ SDRAM, finite-state machine, pipelining, valid/ready handshake, back-pressure,
 reusable verification components / VIP, virtual sequences, test plan, regression,
 JUnit, cocotb, Verilator, Python, Makefile, CI, debug/waveform, post-silicon
 mindset, tape-out.
-> Out of scope here (single clock domain by design): CDC, STA, clock-tree
-> synthesis, UPF/low-power. Called out honestly rather than keyword-stuffed.
+> Out of scope *for this single-clock DUT*: CDC, STA, clock-tree synthesis.
+> **UPF/low-power and processor/AXI verification are covered in the companion
+> projects below** — the remainder is called out honestly, not keyword-stuffed.
+
+---
+
+## Companion projects — verifying things I did *not* design
+
+The project above is design-**and**-verify of my own RTL. These companions apply
+the same rigor — reference-model scoreboards, injected-bug proofs, measured
+results, CI — to designs and a formal harness I did **not** author: the harder,
+more industry-legible half of DV. All run license-free and in
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
+| Project | Verifies (third-party) | Tooling | Measured result |
+|---------|------------------------|---------|-----------------|
+| [`riscv-formal/`](riscv-formal/) | **PicoRV32** RV32IMC core under the standard **riscv-formal** FPV suite | SymbiYosys + Yosys + Yices | **87/87** formal proofs PASS · **5/5** injected bugs caught |
+| [`thirdparty-dv/`](thirdparty-dv/) | a third-party **AXI4-Lite crossbar** (`verilog-axi`) | cocotb + cocotbext-axi + Verilator | **5/5** scoreboard scenarios PASS · decode bug caught |
+| [`lowpower-upf/`](lowpower-upf/) | **power-gating**: UPF isolation + retention sequencing | IEEE-1801 UPF + cocotb + **Icarus** (4-state) | clean PASS · **3/3** injected power bugs caught |
+
+> Why three tools: FPV needs a solver (Yosys/SymbiYosys/Yices); the crossbar
+> scoreboard needs a fast 2-state sim (Verilator); low-power isolation is an
+> X-propagation property that needs a 4-state sim (Icarus). Each project uses the
+> right one, and pins its third-party sources by commit + hash.
 
 ---
 
