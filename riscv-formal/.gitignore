@@ -1,0 +1,7 @@
+# Upstream clone (riscv-formal) + fetched picorv32.v + generated check workdirs.
+# Everything under work/ is reproduced by ./setup.sh; never committed.
+work/
+
+# stray solver/sby scratch if a check is run in place
+*.smt2
+__pycache__/
