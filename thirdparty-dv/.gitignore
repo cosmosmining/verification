@@ -1,0 +1,9 @@
+# Upstream clone (verilog-axi) + generated wrapper, reproduced by ./setup.sh.
+work/
+
+# cocotb / Verilator build + run artifacts
+sim_build/
+__pycache__/
+results.xml
+dump.vcd
+*.log

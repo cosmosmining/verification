@@ -1,0 +1,10 @@
+# Python deps for the third-party AXI4-Lite crossbar DV env.
+#
+# Matches the SDRAM project's stack: cocotb is pinned to 1.9.x because the
+# license-free apt Verilator is 5.020, and cocotb >= 2.0 needs Verilator >=
+# 5.036. cocotbext-axi 0.1.28 targets the cocotb-1.x line (it depends on the
+# separate cocotb-bus package), so this trio is mutually consistent.
+cocotb==1.9.2
+cocotb-bus
+cocotbext-axi==0.1.28
+pytest>=7.0

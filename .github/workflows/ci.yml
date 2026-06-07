@@ -49,3 +49,84 @@ jobs:
         run: |
           echo "## Regression triage" >> "$GITHUB_STEP_SUMMARY"
           cat regression_out/triage.md >> "$GITHUB_STEP_SUMMARY" || true
+
+  # ---- Companion projects: verifying things I did NOT design ----------------
+
+  riscv-formal:
+    name: riscv-formal (PicoRV32 FPV subset)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install yosys + SymbiYosys + yices
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yosys z3
+          git clone --depth 1 https://github.com/YosysHQ/sby /tmp/sby
+          sudo make -C /tmp/sby install
+          curl -fsSL -o /tmp/yices.tgz \
+            https://github.com/SRI-CSL/yices2/releases/download/yices-2.7.0/yices-2.7.0-x86_64-pc-linux-gnu-static-gmp.tar.gz
+          tar -C /tmp -xzf /tmp/yices.tgz
+          sudo cp /tmp/yices-2.7.0/bin/yices-smt2 /usr/local/bin/
+          yosys --version && yices-smt2 --version
+      - name: Setup (pin + fetch riscv-formal & picorv32, genchecks)
+        run: cd riscv-formal && SOLVER=yices ./setup.sh
+      - name: Prove a representative check subset (one per class)
+        run: |
+          cd riscv-formal && python3 run_checks.py --jobs 4 --timeout 1200 \
+            --only insn_add_ch0,insn_mul_ch0,reg_ch0,pc_fwd_ch0,unique_ch0,causal_ch0,csrw_mcycle_ch0,csr_ill_c00_ch0
+      - name: Injected-bug demonstration (5/5 caught)
+        run: cd riscv-formal && bash bugs/run_bug_demo.sh
+      - name: Publish to run summary
+        if: always()
+        run: |
+          { echo "## riscv-formal (PicoRV32, subset)"; cat riscv-formal/results/RESULTS.md; \
+            echo; cat riscv-formal/bugs/BUGS.md; } >> "$GITHUB_STEP_SUMMARY" || true
+
+  thirdparty-axi:
+    name: third-party AXI4-Lite crossbar DV
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Verilator + cocotb + cocotbext-axi
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y verilator
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r thirdparty-dv/requirements.txt
+      - name: Setup (fetch verilog-axi + generate 2x2 wrapper)
+        run: cd thirdparty-dv && ./setup.sh
+      - name: Run scoreboard tests (5/5)
+        run: cd thirdparty-dv && make && python3 check_results.py
+      - name: Injected decode-bug demonstration
+        run: cd thirdparty-dv && bash bugs/run_bug_demo.sh
+      - name: Publish to run summary
+        if: always()
+        run: |
+          { echo "## third-party AXI4-Lite crossbar DV"; cat thirdparty-dv/bugs/BUGS.md; } \
+            >> "$GITHUB_STEP_SUMMARY" || true
+
+  lowpower-upf:
+    name: power-aware UPF (isolation/retention)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Icarus + cocotb + tcl
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog tcl
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r lowpower-upf/requirements.txt
+      - name: UPF syntax lint
+        run: cd lowpower-upf && tclsh upf/upf_lint.tcl
+      - name: Run isolation/retention scoreboard
+        run: cd lowpower-upf && make && python3 check_results.py
+      - name: Injected power-bug campaign (3/3 caught)
+        run: cd lowpower-upf && bash bugs/run_bug_demo.sh
+      - name: Publish to run summary
+        if: always()
+        run: |
+          { echo "## power-aware UPF (isolation/retention)"; cat lowpower-upf/bugs/BUGS.md; } \
+            >> "$GITHUB_STEP_SUMMARY" || true

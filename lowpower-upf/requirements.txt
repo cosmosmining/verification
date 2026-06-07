@@ -1,0 +1,7 @@
+# Python deps for the power-aware (UPF) sim.
+#
+# Uses Icarus Verilog (4-state) so isolation is an observable X-propagation
+# property; cocotb 1.9.x matches it. Install Icarus from apt: `iverilog`.
+# Optional: tclsh (Tcl) for the UPF syntax lint (`tcl` apt package).
+cocotb==1.9.2
+pytest>=7.0

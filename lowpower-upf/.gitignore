@@ -1,0 +1,7 @@
+# cocotb / Icarus build + run artifacts
+sim_build/
+__pycache__/
+results.xml
+*.vcd
+*.vvp
+*.log
