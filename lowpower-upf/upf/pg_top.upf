@@ -1,0 +1,70 @@
+# ===========================================================================
+# pg_top.upf — IEEE-1801 (UPF 2.1) power intent for the power-gated counter.
+#
+# This is the AUTHORITATIVE power-intent spec. In a commercial low-power flow
+# (VCS-NLP / Questa-PA / Xcelium-LP) the simulator/implementation tool reads
+# this UPF and AUTOMATICALLY inserts the isolation and retention cells and the
+# power switch. No license-free simulator consumes UPF, so the RTL under ../rtl
+# MODELS exactly these strategies (isolation clamp, retention save/restore,
+# power switch / X-on-gate) so the same sequencing is verifiable on Icarus.
+#
+# Tcl-syntax sanity (license-free): `tclsh upf/upf_lint.tcl`.
+# ===========================================================================
+upf_version 2.1
+set_design_top pg_top
+
+# ---- power domains -------------------------------------------------------
+# PD_TOP  : always-on — PMU, isolation cells, retention shadow live here.
+# PD_CORE : switchable — the counter register (u_core), gated by the switch.
+create_power_domain PD_TOP
+create_power_domain PD_CORE -elements {u_core}
+
+# ---- supply ports / nets -------------------------------------------------
+create_supply_port  VDD
+create_supply_port  VSS
+create_supply_net   VDD
+create_supply_net   VSS
+create_supply_net   VDD_CORE          ;# switched supply for PD_CORE
+connect_supply_net  VDD -ports VDD
+connect_supply_net  VSS -ports VSS
+
+set_domain_supply_net PD_TOP  -primary_power_net VDD      -primary_ground_net VSS
+set_domain_supply_net PD_CORE -primary_power_net VDD_CORE -primary_ground_net VSS
+
+# ---- power switch for PD_CORE -------------------------------------------
+# Gates VDD -> VDD_CORE under the PMU's pwr_on. (Modelled in RTL by driving the
+# core register to X whenever pwr_on=0.)
+create_power_switch core_sw \
+    -domain PD_CORE \
+    -output_supply_port {vout VDD_CORE} \
+    -input_supply_port  {vin  VDD} \
+    -control_port       {sw_on pwr_on} \
+    -on_state  {ON  vin {sw_on}} \
+    -off_state {OFF     {!sw_on}}
+
+# ---- isolation strategy --------------------------------------------------
+# Clamp all PD_CORE outputs to 0 while isolated; enabled by iso_en (high).
+# (Modelled in RTL by the isolation cell: cnt_obs = iso_en ? 0 : cnt.)
+set_isolation iso_core \
+    -domain PD_CORE \
+    -isolation_power_net  VDD \
+    -isolation_ground_net VSS \
+    -clamp_value 0 \
+    -applies_to outputs
+set_isolation_control iso_core \
+    -domain PD_CORE \
+    -isolation_signal iso_en \
+    -isolation_sense  high \
+    -location parent
+
+# ---- retention strategy --------------------------------------------------
+# Retain the counter register across power-down; save/restore pulses from PMU.
+# (Modelled in RTL by the always-on retention shadow cnt_ret.)
+set_retention ret_core \
+    -domain PD_CORE \
+    -retention_power_net VDD \
+    -retention_ground_net VSS
+set_retention_control ret_core \
+    -domain PD_CORE \
+    -save_signal    {save    high} \
+    -restore_signal {restore high}
