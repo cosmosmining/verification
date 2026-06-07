@@ -152,13 +152,16 @@ def main() -> int:
     ap.add_argument("--timeout", type=int, default=1800,
                     help="per-check wall-clock timeout (s)")
     ap.add_argument("--only", default="",
-                    help="only run checks whose name starts with this prefix")
+                    help="only run checks whose name starts with one of these "
+                         "comma-separated prefixes (e.g. insn_add,reg,pc_fwd)")
     ap.add_argument("--out", default=str(here / "results"),
                     help="output directory for RESULTS.md / json / junit")
     args = ap.parse_args()
 
     cdir = Path(args.checks_dir)
-    sbys = sorted(p for p in cdir.glob("*.sby") if p.stem.startswith(args.only))
+    prefixes = tuple(x for x in args.only.split(",") if x)
+    sbys = sorted(p for p in cdir.glob("*.sby")
+                  if not prefixes or p.stem.startswith(prefixes))
     if not sbys:
         print(f"no checks found in {cdir} (run ./setup.sh first?)", file=sys.stderr)
         return 2
